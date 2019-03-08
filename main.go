@@ -35,12 +35,12 @@ func init() {
 		// The TextFormatter is default, you don't actually have to do this.
 		logrus.SetFormatter(&logrus.TextFormatter{})
 		// Set the log-level:
-		//logrus.SetLevel(logrus.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	} else {
 		// Log as JSON instead of the default ASCII formatter.
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 		// Set the log-level:
-		//logrus.SetLevel(logrus.InfoLevel)
+		logrus.SetLevel(logrus.InfoLevel)
 	}
 }
 

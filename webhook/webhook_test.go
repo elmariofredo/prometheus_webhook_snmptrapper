@@ -48,7 +48,7 @@ func TestWebhook(t *testing.T) {
 func testWebhookValidPayload(t *testing.T) {
 
 	// Validate the payload:
-	err, alerts := validatePayload([]byte(validPayload))
+	alerts, err := validatePayload([]byte(validPayload))
 
 	// Assess the results:
 	assert.NoError(t, err, "Unable to validate a valid payload")
@@ -58,7 +58,7 @@ func testWebhookValidPayload(t *testing.T) {
 func testWebhookInvalidPayload(t *testing.T) {
 
 	// Validate the payload:
-	err, alerts := validatePayload([]byte(invalidPayload))
+	alerts, err := validatePayload([]byte(invalidPayload))
 
 	// Assess the results:
 	assert.Error(t, err, "Validated an invalid JSON payload")

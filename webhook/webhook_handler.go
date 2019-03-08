@@ -11,13 +11,13 @@ import (
 	template "github.com/prometheus/alertmanager/template"
 )
 
-// A webhook handler with a "ServeHTTP" method:
-type WebhookHandler struct {
+//Handler A webhook handler with a "ServeHTTP" method:
+type Handler struct {
 	AlertsChannel chan types.Alert
 }
 
 // Handle webhook requests:
-func (webhookHandler *WebhookHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+func (webhookHandler *Handler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
 
 	// Read the request body:
 	payload, err := ioutil.ReadAll(request.Body)
@@ -29,7 +29,7 @@ func (webhookHandler *WebhookHandler) ServeHTTP(responseWriter http.ResponseWrit
 	}
 
 	// Validate the payload:
-	err, alerts := validatePayload(payload)
+	alerts, err := validatePayload(payload)
 	if err != nil {
 		http.Error(responseWriter, "Failed to unmarshal the request-body into an alert", http.StatusBadRequest)
 		return
@@ -48,8 +48,8 @@ func (webhookHandler *WebhookHandler) ServeHTTP(responseWriter http.ResponseWrit
 
 }
 
-// Validate a webhook payload and return a list of Alerts:
-func validatePayload(payload []byte) (error, []types.Alert) {
+//validatePayload Validate a webhook payload and return a list of Alerts:
+func validatePayload(payload []byte) ([]types.Alert, error) {
 
 	// Make our response:
 	alerts := make([]types.Alert, 0)
@@ -61,10 +61,10 @@ func validatePayload(payload []byte) (error, []types.Alert) {
 	err := json.Unmarshal(payload, prometheusData)
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err, "payload": payload}).Error("Failed to unmarshal the request body into an alert")
-		return err, alerts
-	} else {
-		log.WithFields(logrus.Fields{"payload": string(payload)}).Debug("Received a valid webhook alert")
+		return alerts, err
 	}
+
+	log.WithFields(logrus.Fields{"payload": string(payload)}).Debug("Received a valid webhook alert")
 
 	// Iterate over the list of alerts:
 	for _, alertDetails := range prometheusData.Alerts {
@@ -85,5 +85,5 @@ func validatePayload(payload []byte) (error, []types.Alert) {
 
 	}
 
-	return nil, alerts
+	return alerts, nil
 }

@@ -28,9 +28,8 @@ func sendTrap(alert types.Alert) {
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err}).Error("Failed to create snmpgo.SNMP object")
 		return
-	} else {
-		log.WithFields(logrus.Fields{"address": myConfig.SNMPTrapAddress, "retries": myConfig.SNMPRetries, "community": myConfig.SNMPCommunity}).Debug("Created snmpgo.SNMP object")
 	}
+	log.WithFields(logrus.Fields{"address": myConfig.SNMPTrapAddress, "retries": myConfig.SNMPRetries, "community": myConfig.SNMPCommunity}).Debug("Created snmpgo.SNMP object")
 
 	// Build VarBind list:
 	var varBinds snmpgo.VarBinds
@@ -65,9 +64,9 @@ func sendTrap(alert types.Alert) {
 	if err = snmp.V2Trap(varBinds); err != nil {
 		log.WithFields(logrus.Fields{"error": err}).Error("Failed to send SNMP trap")
 		return
-	} else {
-		log.WithFields(logrus.Fields{"status": alert.Status}).Info("It's a trap!")
 	}
+	log.WithFields(logrus.Fields{"status": alert.Status}).Info("It's a trap!")
+
 }
 
 func runTemplate(name string, templateDef string, data interface{}) string {

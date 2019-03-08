@@ -23,6 +23,7 @@ func init() {
 	logrus.SetLevel(logrus.DebugLevel)
 }
 
+//Run main function for webhook
 func Run(myConfigFromMain config.Config, alertsChannel chan types.Alert, waitGroup *sync.WaitGroup) {
 
 	log.WithFields(logrus.Fields{"address": myConfigFromMain.WebhookAddress}).Info("Starting the Webhook server")
@@ -35,7 +36,7 @@ func Run(myConfigFromMain config.Config, alertsChannel chan types.Alert, waitGro
 	signal.Notify(signals, os.Kill, os.Interrupt)
 
 	// Listen for webhooks:
-	http.ListenAndServe(myConfig.WebhookAddress, &WebhookHandler{AlertsChannel: alertsChannel})
+	http.ListenAndServe(myConfig.WebhookAddress, &Handler{AlertsChannel: alertsChannel})
 
 	// Wait for shutdown:
 	for {

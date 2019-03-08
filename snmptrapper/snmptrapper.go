@@ -14,25 +14,15 @@ import (
 var (
 	log      = logrus.WithFields(logrus.Fields{"logger": "SNMP-trapper"})
 	myConfig config.Config
-	//trapOIDs types.TrapOIDs
 )
 
 func init() {
 	// Set the log-level:
 	logrus.SetLevel(logrus.DebugLevel)
 
-	// Configure which OIDs to use for the SNMP Traps:
-	// trapOIDs.FiringTrap, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.0.1")
-	// trapOIDs.RecoveryTrap, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.0.2")
-	// trapOIDs.Instance, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.1")
-	// trapOIDs.Service, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.2")
-	// trapOIDs.Location, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.3")
-	// trapOIDs.Severity, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.4")
-	// trapOIDs.Description, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.5")
-	// trapOIDs.JobName, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.6")
-	// trapOIDs.TimeStamp, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.7")
 }
 
+//Run main function for send traps call sendTrap
 func Run(myConfigFromMain config.Config, alertsChannel chan types.Alert, waitGroup *sync.WaitGroup) {
 
 	log.WithFields(logrus.Fields{"address": myConfigFromMain.SNMPTrapAddress}).Info("Starting the SNMP trapper")

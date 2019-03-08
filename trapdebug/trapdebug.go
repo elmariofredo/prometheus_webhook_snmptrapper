@@ -47,12 +47,12 @@ func main() {
 		logrus.WithFields(logrus.Fields{"client": from.IP}).Debug("Data received")
 
 		// Handle the data:
-		go HandleUdp(buf[:read])
+		go HandleUDP(buf[:read])
 	}
 }
 
-// Handle SNMP data:
-func HandleUdp(data []byte) {
+//HandleUDP Handle SNMP data:
+func HandleUDP(data []byte) {
 
 	// Attempt to parse the SNMP data:
 	trap, err := gosnmptrap.ParseUdp(data)

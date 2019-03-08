@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+//Alert combination of prometheus alert and webhook (webhook with one alert)
 type Alert struct {
 	Address      string
 	Status       string
@@ -13,14 +14,10 @@ type Alert struct {
 	EndsAt       time.Time
 	GeneratorURL string
 
-	//Prometheus data
-	Receiver string
-	//Status   string
-	//Alerts   Alerts `json:"alerts"`
-
+	//Prometheus webhook data
+	Receiver          string
 	GroupLabels       map[string]string
 	CommonLabels      map[string]string
 	CommonAnnotations map[string]string
-
-	ExternalURL string
+	ExternalURL       string
 }
