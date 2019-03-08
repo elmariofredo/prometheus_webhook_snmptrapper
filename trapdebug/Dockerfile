@@ -1,12 +1,11 @@
-FROM alpine:latest
-MAINTAINER Prawn
+FROM alpine:3.6
 USER root
 
 ENV LISTEN_PORT=162
 
 EXPOSE 162/udp
 
-COPY trapdebug /usr/local/bin/trapdebug
+COPY bin/prometheus_webhook_snmptrapper-debugger /usr/local/bin/trapdebug
 
 CMD exec /usr/local/bin/trapdebug -listenport=$LISTEN_PORT
 

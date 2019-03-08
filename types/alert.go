@@ -12,4 +12,15 @@ type Alert struct {
 	StartsAt     time.Time
 	EndsAt       time.Time
 	GeneratorURL string
+
+	//Prometheus data
+	Receiver string
+	//Status   string
+	//Alerts   Alerts `json:"alerts"`
+
+	GroupLabels       map[string]string
+	CommonLabels      map[string]string
+	CommonAnnotations map[string]string
+
+	ExternalURL string
 }

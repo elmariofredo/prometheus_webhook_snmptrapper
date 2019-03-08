@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	types "github.com/chrusty/prometheus_webhook_snmptrapper/types"
+	types "github.com/sysincz/prometheus_webhook_snmptrapper/types"
 
 	logrus "github.com/Sirupsen/logrus"
 	template "github.com/prometheus/alertmanager/template"
@@ -71,11 +71,16 @@ func validatePayload(payload []byte) (error, []types.Alert) {
 
 		// Make a new SNMP alert:
 		alerts = append(alerts, types.Alert{
-			Status:      prometheusData.Status,
-			Labels:      alertDetails.Labels,
-			Annotations: alertDetails.Annotations,
-			StartsAt:    alertDetails.StartsAt,
-			EndsAt:      alertDetails.EndsAt,
+			Status:            prometheusData.Status,
+			Labels:            alertDetails.Labels,
+			Annotations:       alertDetails.Annotations,
+			StartsAt:          alertDetails.StartsAt,
+			EndsAt:            alertDetails.EndsAt,
+			Receiver:          prometheusData.Receiver,
+			GroupLabels:       prometheusData.GroupLabels,
+			CommonLabels:      prometheusData.CommonLabels,
+			CommonAnnotations: prometheusData.CommonAnnotations,
+			ExternalURL:       prometheusData.ExternalURL,
 		})
 
 	}

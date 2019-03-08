@@ -5,17 +5,16 @@ import (
 	"os/signal"
 	"sync"
 
-	config "github.com/chrusty/prometheus_webhook_snmptrapper/config"
-	types "github.com/chrusty/prometheus_webhook_snmptrapper/types"
+	config "github.com/sysincz/prometheus_webhook_snmptrapper/config"
+	types "github.com/sysincz/prometheus_webhook_snmptrapper/types"
 
 	logrus "github.com/Sirupsen/logrus"
-	snmpgo "github.com/k-sone/snmpgo"
 )
 
 var (
 	log      = logrus.WithFields(logrus.Fields{"logger": "SNMP-trapper"})
 	myConfig config.Config
-	trapOIDs types.TrapOIDs
+	//trapOIDs types.TrapOIDs
 )
 
 func init() {
@@ -23,15 +22,15 @@ func init() {
 	logrus.SetLevel(logrus.DebugLevel)
 
 	// Configure which OIDs to use for the SNMP Traps:
-	trapOIDs.FiringTrap, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.0.1")
-	trapOIDs.RecoveryTrap, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.0.2")
-	trapOIDs.Instance, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.1")
-	trapOIDs.Service, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.2")
-	trapOIDs.Location, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.3")
-	trapOIDs.Severity, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.4")
-	trapOIDs.Description, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.5")
-	trapOIDs.JobName, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.6")
-	trapOIDs.TimeStamp, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.7")
+	// trapOIDs.FiringTrap, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.0.1")
+	// trapOIDs.RecoveryTrap, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.0.2")
+	// trapOIDs.Instance, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.1")
+	// trapOIDs.Service, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.2")
+	// trapOIDs.Location, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.3")
+	// trapOIDs.Severity, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.4")
+	// trapOIDs.Description, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.5")
+	// trapOIDs.JobName, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.6")
+	// trapOIDs.TimeStamp, _ = snmpgo.NewOid("1.3.6.1.3.1977.1.1.7")
 }
 
 func Run(myConfigFromMain config.Config, alertsChannel chan types.Alert, waitGroup *sync.WaitGroup) {
