@@ -35,7 +35,7 @@ build-trapper-image: build
 build-trapper-image-debug:  build
 	docker build . --file ./trapdebug/Dockerfile -t $(DEBUG_IMAGE):$(VERSION)
 
-docker-push: build-image
+docker-push: docker
 	docker push $(IMAGE):$(VERSION)
 	docker push $(DEBUG_IMAGE):$(VERSION)
 
