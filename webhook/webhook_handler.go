@@ -18,6 +18,11 @@ type Handler struct {
 
 // Handle webhook requests:
 func (webhookHandler *Handler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+	//prepare for request.Form
+	err := request.ParseForm()
+	if err != nil {
+		panic(err)
+	}
 
 	// Read the request body:
 	payload, err := ioutil.ReadAll(request.Body)
@@ -29,7 +34,7 @@ func (webhookHandler *Handler) ServeHTTP(responseWriter http.ResponseWriter, req
 	}
 
 	// Validate the payload:
-	alerts, err := validatePayload(payload)
+	alerts, err := validatePayload(payload, request.Form)
 	if err != nil {
 		http.Error(responseWriter, "Failed to unmarshal the request-body into an alert", http.StatusBadRequest)
 		return
@@ -37,7 +42,7 @@ func (webhookHandler *Handler) ServeHTTP(responseWriter http.ResponseWriter, req
 
 	// Send the alerts to the snmp-trapper:
 	for alertIndex, alert := range alerts {
-		log.WithFields(logrus.Fields{"index": alertIndex, "status": alert.Status, "labels": alert.Labels}).Debug("Forwarding an alert to the SNMP trapper")
+		log.WithFields(logrus.Fields{"index": alertIndex, "status": alert.Status, "labels": alert.Labels, "URLValues": alert.URLValues}).Debug("Forwarding an alert to the SNMP trapper")
 
 		// Enrich the request with the remote-address:
 		alert.Address = request.RemoteAddr
@@ -49,7 +54,7 @@ func (webhookHandler *Handler) ServeHTTP(responseWriter http.ResponseWriter, req
 }
 
 //validatePayload Validate a webhook payload and return a list of Alerts:
-func validatePayload(payload []byte) ([]types.Alert, error) {
+func validatePayload(payload []byte, URLValues map[string][]string) ([]types.Alert, error) {
 
 	// Make our response:
 	alerts := make([]types.Alert, 0)
@@ -81,6 +86,7 @@ func validatePayload(payload []byte) ([]types.Alert, error) {
 			CommonLabels:      prometheusData.CommonLabels,
 			CommonAnnotations: prometheusData.CommonAnnotations,
 			ExternalURL:       prometheusData.ExternalURL,
+			URLValues:         URLValues,
 		})
 
 	}

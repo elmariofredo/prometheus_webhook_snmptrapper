@@ -82,6 +82,8 @@ type OidConfig struct {
 	OidName   string `yaml:"Name" json:"Name"`
 	OidNumber string `yaml:"Oid" json:"Oid"`
 	Template  string `yaml:"Template" json:"Template"`
+	Type      string `yaml:"Type" json:"Type"`
+	NotEmpty  bool   `yaml:"NotEmpty" json:"NotEmpty"`
 	// Fields     map[string]interface{} `yaml:"fields" json:"fields"`
 	// Components []string               `yaml:"components" json:"components"`
 
@@ -90,19 +92,19 @@ type OidConfig struct {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (rc *OidConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *OidConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type plain OidConfig
-	if err := unmarshal((*plain)(rc)); err != nil {
+	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
 	// Recursively convert any maps to map[string]interface{}, filtering out all non-string keys, so the json encoder
 	// doesn't blow up when marshaling JIRA requests.
-	// fieldsWithStringKeys, err := tcontainer.ConvertToMarshalMap(rc.Fields, func(v string) string { return v })
+	// fieldsWithStringKeys, err := tcontainer.ConvertToMarshalMap(c.Fields, func(v string) string { return v })
 	// if err != nil {
 	// 	return err
 	// }
 	// rc.Fields = fieldsWithStringKeys
-	return checkOverflow(rc.XXX, "oid")
+	return checkOverflow(c.XXX, "oid")
 }
 
 // Config is the top-level configuration for JIRAlert's config file.
@@ -157,17 +159,31 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	for _, oid := range c.Oids {
-		if oid.OidNumber == "" {
-			return fmt.Errorf("missing OidNumber for oid %+v", oid)
-		}
-
-		if oid.Template == "" {
-			return fmt.Errorf("missing Template for oid %+v", oid)
-		}
 
 		if oid.OidName == "" {
 			return fmt.Errorf("missing OidName for oid %+v", oid)
 		}
+
+		if oid.OidNumber == "" {
+			return fmt.Errorf("missing OidNumber for oid %+v", oid.OidName)
+		}
+
+		if oid.Template == "" {
+			return fmt.Errorf("missing Template for oid %+v", oid.OidName)
+		}
+
+		if oid.Type != "" {
+			if oid.Type == "int32" {
+
+			} else if oid.Type == "string" {
+
+			} else {
+				return fmt.Errorf("Wrong Type '%s' for oid %+v", oid.Type, oid.OidName)
+			}
+
+		}
+
+		//fmt.Printf("NotEmpty: %v\n", oid.NotEmpty)
 	}
 
 	if len(c.Oids) == 0 {

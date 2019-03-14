@@ -20,4 +20,6 @@ type Alert struct {
 	CommonLabels      map[string]string
 	CommonAnnotations map[string]string
 	ExternalURL       string
+	//Get from Url
+	URLValues map[string][]string
 }

@@ -1,10 +1,11 @@
 package snmptrapper
 
 import (
-	"bytes"
-	"text/template"
-	"time"
+	"strconv"
+	"strings"
 
+	config "github.com/sysincz/prometheus_webhook_snmptrapper/config"
+	template "github.com/sysincz/prometheus_webhook_snmptrapper/template"
 	types "github.com/sysincz/prometheus_webhook_snmptrapper/types"
 
 	logrus "github.com/Sirupsen/logrus"
@@ -30,26 +31,30 @@ func sendTrap(alert types.Alert) {
 		return
 	}
 	log.WithFields(logrus.Fields{"address": myConfig.SNMPTrapAddress, "retries": myConfig.SNMPRetries, "community": myConfig.SNMPCommunity}).Debug("Created snmpgo.SNMP object")
-
+	RunTemplate("{{ printf \"%#v\" . }}", alert)
 	// Build VarBind list:
 	var varBinds snmpgo.VarBinds
-
+	varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSysUpTime, snmpgo.NewTimeTicks(1000)))
 	// The "enterprise OID" for the trap (rising/firing or falling/recovery):
 	if alert.Status == "firing" {
 		varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, toOid(myConfig.FiringTrap)))
-		//	varBinds = append(varBinds, snmpgo.NewVarBind(trapOIDs.TimeStamp, snmpgo.NewOctetString([]byte(alert.StartsAt.Format(time.RFC3339)))))
-		varBinds = append(varBinds, snmpgo.NewVarBind(toOid("1.3.6.1.3.1977.1.1.7"), snmpgo.NewOctetString([]byte(alert.StartsAt.Format(time.RFC3339)))))
 	} else {
 		varBinds = append(varBinds, snmpgo.NewVarBind(snmpgo.OidSnmpTrap, toOid(myConfig.RecoveryTrap)))
-		//	varBinds = append(varBinds, snmpgo.NewVarBind(trapOIDs.TimeStamp, snmpgo.NewOctetString([]byte(alert.EndsAt.Format(time.RFC3339)))))
-
-		varBinds = append(varBinds, snmpgo.NewVarBind(toOid("1.3.6.1.3.1977.1.1.7"), snmpgo.NewOctetString([]byte(alert.EndsAt.Format(time.RFC3339)))))
 	}
-	runTemplate("DataDump", "{{ printf \"%#v\" . }}", alert)
+
 	// Insert the AlertManager variables:
 	for _, oid := range myConfig.Oids {
-		ret := runTemplate(oid.OidName, oid.Template, alert)
-		varBinds = append(varBinds, snmpgo.NewVarBind(toOid(oid.OidNumber), snmpgo.NewOctetString([]byte(ret))))
+		ret := RunTemplate(oid.Template, alert)
+		if !notEmpty(oid, ret) {
+			return
+		}
+
+		if oid.Type == "int32" {
+			varBinds = append(varBinds, snmpgo.NewVarBind(toOid(oid.OidNumber), snmpgo.NewInteger(strToInt32(ret))))
+		} else {
+			varBinds = append(varBinds, snmpgo.NewVarBind(toOid(oid.OidNumber), snmpgo.NewOctetString([]byte(ret))))
+		}
+
 	}
 
 	//fmt.Printf("%+v\n", varBinds)
@@ -68,18 +73,35 @@ func sendTrap(alert types.Alert) {
 	log.WithFields(logrus.Fields{"status": alert.Status}).Info("It's a trap!")
 
 }
+func notEmpty(oid *config.OidConfig, text string) bool {
+	if oid.NotEmpty {
+		if text == "" {
+			log.WithFields(logrus.Fields{"error": "Value is empty", "oid": oid.OidName, "Template": oid.Template}).Error("Failed to create snmpgo.SNMP object")
+			return false
+		}
+	}
+	return true
+}
+func strToInt32(text string) int32 {
+	//convert string to int32
+	i1, err := strconv.Atoi(text)
+	if err == nil {
 
-func runTemplate(name string, templateDef string, data interface{}) string {
-	tmpl, err := template.New(name).Parse(templateDef)
-	if err != nil {
-		panic(err)
+		return int32(i1)
 	}
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, data)
-	ret := buf.String()
-	log.WithFields(logrus.Fields{"Name": name, "Template": templateDef, "Output": ret}).Debug("Template processing")
+	log.Errorf("Unabele to convert string '%s' to int32. %s", text, err)
+	return int32(i1)
+}
+
+//RunTemplate translate template string to string + trimSpace
+func RunTemplate(text string, data interface{}) string {
+	tmpl := template.Init()
+
+	value, err := tmpl.Execute(text, data)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("Error loading templates from %s: %s", text, err)
+		return ""
 	}
-	return ret
+	value = strings.TrimSpace(value)
+	return value
 }
