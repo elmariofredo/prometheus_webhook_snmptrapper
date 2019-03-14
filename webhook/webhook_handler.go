@@ -70,25 +70,30 @@ func validatePayload(payload []byte, URLValues map[string][]string) ([]types.Ale
 	}
 
 	log.WithFields(logrus.Fields{"payload": string(payload)}).Debug("Received a valid webhook alert")
+	//First send resolved after that firing (fix change severity)
+	strings := []string{"resolved", "firing"}
+	for _, status := range strings {
 
-	// Iterate over the list of alerts:
-	for _, alertDetails := range prometheusData.Alerts {
+		// Iterate over the list of alerts:
+		for _, alertDetails := range prometheusData.Alerts {
+			if alertDetails.Status == status {
+				// Make a new SNMP alert:
+				alerts = append(alerts, types.Alert{
+					Status:            alertDetails.Status,
+					Labels:            alertDetails.Labels,
+					Annotations:       alertDetails.Annotations,
+					StartsAt:          alertDetails.StartsAt,
+					EndsAt:            alertDetails.EndsAt,
+					Receiver:          prometheusData.Receiver,
+					GroupLabels:       prometheusData.GroupLabels,
+					CommonLabels:      prometheusData.CommonLabels,
+					CommonAnnotations: prometheusData.CommonAnnotations,
+					ExternalURL:       prometheusData.ExternalURL,
+					URLValues:         URLValues,
+				})
+			}
 
-		// Make a new SNMP alert:
-		alerts = append(alerts, types.Alert{
-			Status:            prometheusData.Status,
-			Labels:            alertDetails.Labels,
-			Annotations:       alertDetails.Annotations,
-			StartsAt:          alertDetails.StartsAt,
-			EndsAt:            alertDetails.EndsAt,
-			Receiver:          prometheusData.Receiver,
-			GroupLabels:       prometheusData.GroupLabels,
-			CommonLabels:      prometheusData.CommonLabels,
-			CommonAnnotations: prometheusData.CommonAnnotations,
-			ExternalURL:       prometheusData.ExternalURL,
-			URLValues:         URLValues,
-		})
-
+		}
 	}
 
 	return alerts, nil
