@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	config "github.com/sysincz/prometheus_webhook_snmptrapper/config"
 	template "github.com/sysincz/prometheus_webhook_snmptrapper/template"
 	types "github.com/sysincz/prometheus_webhook_snmptrapper/types"
@@ -15,21 +14,32 @@ import (
 )
 
 var (
-	alertsProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "snmptrapper_processed_alerts_total",
-		Help: "The total number of processed events",
-	})
-
-	alertsForwarded = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "snmptrapper_forwarded_alerts_total",
-		Help: "The total number of processed events",
-	})
-
-	alertsFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "snmptrapper_failed_alerts_total",
-		Help: "The total number of failed events",
-	})
+	alertsFailed = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "snmptrapper_failed_alerts_total",
+			Help: "The total number of processed events",
+		},
+		[]string{
+			// Which namespace has requested the operation?
+			"alert_namespace",
+			"alertname",
+		})
+	alertsForwarded = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "snmptrapper_forwarded_alerts_total",
+			Help: "The total number of processed events",
+		},
+		[]string{
+			// Which namespace has requested the operation?
+			"alert_namespace",
+			"alertname",
+		})
 )
+
+func init() {
+	prometheus.MustRegister(alertsFailed)
+	prometheus.MustRegister(alertsForwarded)
+}
 
 func toOid(oidNumber string) *snmpgo.Oid {
 	oid, _ := snmpgo.NewOid(oidNumber)
@@ -38,7 +48,6 @@ func toOid(oidNumber string) *snmpgo.Oid {
 
 func sendTrap(alert types.Alert) {
 
-	alertsProcessed.Inc()
 	// Prepare an SNMP handler:
 	snmp, err := snmpgo.NewSNMP(snmpgo.SNMPArguments{
 		Version:   snmpgo.V2c,
@@ -48,7 +57,7 @@ func sendTrap(alert types.Alert) {
 	})
 	if err != nil {
 		log.WithFields(logrus.Fields{"error": err}).Error("Failed to create snmpgo.SNMP object")
-		alertsFailed.Inc()
+		alertsFailed.WithLabelValues(alert.Labels["namespace"], alert.Labels["alertname"]).Inc()
 		return
 	}
 	log.WithFields(logrus.Fields{"address": myConfig.SNMPTrapAddress, "retries": myConfig.SNMPRetries, "community": myConfig.SNMPCommunity}).Debug("Created snmpgo.SNMP object")
@@ -67,7 +76,7 @@ func sendTrap(alert types.Alert) {
 	for _, oid := range myConfig.Oids {
 		ret := RunTemplate(oid.Template, alert)
 		if !notEmpty(oid, ret) {
-			alertsFailed.Inc()
+			alertsFailed.WithLabelValues(alert.Labels["namespace"], alert.Labels["alertname"]).Inc()
 			return
 		}
 
@@ -83,7 +92,7 @@ func sendTrap(alert types.Alert) {
 	// Create an SNMP "connection":
 	if err = snmp.Open(); err != nil {
 		log.WithFields(logrus.Fields{"error": err}).Error("Failed to open SNMP connection")
-		alertsFailed.Inc()
+		alertsFailed.WithLabelValues(alert.Labels["namespace"], alert.Labels["alertname"]).Inc()
 		return
 	}
 	defer snmp.Close()
@@ -91,11 +100,12 @@ func sendTrap(alert types.Alert) {
 	// Send the trap:
 	if err = snmp.V2Trap(varBinds); err != nil {
 		log.WithFields(logrus.Fields{"error": err}).Error("Failed to send SNMP trap")
-		alertsFailed.Inc()
+		alertsFailed.WithLabelValues(alert.Labels["namespace"], alert.Labels["alertname"]).Inc()
 		return
 	}
 	log.WithFields(logrus.Fields{"status": alert.Status}).Info("It's a trap!")
-	alertsForwarded.Inc()
+
+	alertsForwarded.WithLabelValues(alert.Labels["namespace"], alert.Labels["alertname"]).Inc()
 
 }
 func notEmpty(oid *config.OidConfig, text string) bool {
