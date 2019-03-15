@@ -7,6 +7,7 @@ import (
 
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	config "github.com/sysincz/prometheus_webhook_snmptrapper/config"
 	types "github.com/sysincz/prometheus_webhook_snmptrapper/types"
 
@@ -35,8 +36,10 @@ func Run(myConfigFromMain config.Config, alertsChannel chan types.Alert, waitGro
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Kill, os.Interrupt)
 
+	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/alerts", &Handler{AlertsChannel: alertsChannel})
 	// Listen for webhooks:
-	http.ListenAndServe(myConfig.WebhookAddress, &Handler{AlertsChannel: alertsChannel})
+	http.ListenAndServe(myConfig.WebhookAddress, nil)
 
 	// Wait for shutdown:
 	for {
