@@ -9,6 +9,16 @@ import (
 
 	logrus "github.com/Sirupsen/logrus"
 	template "github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	webhooks = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "snmptrapper_webhooks_total",
+			Help: "The total number of processed webhooks",
+		})
 )
 
 //Handler A webhook handler with a "ServeHTTP" method:
@@ -18,6 +28,8 @@ type Handler struct {
 
 // Handle webhook requests:
 func (webhookHandler *Handler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+	//count webhoks for snmp
+	webhooks.Inc()
 	//prepare for request.Form
 	err := request.ParseForm()
 	if err != nil {
